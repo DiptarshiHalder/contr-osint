@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Register - IntelX{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="row w-100 shadow-lg rounded overflow-hidden" style="max-width: 900px; background: #fff;">
+        
+        <!-- Left Section -->
+        <div class="col-md-6 p-5 d-flex flex-column justify-content-center">
+            <h2 class="fw-bold text-primary"> Create an Account</h2>
+            <p class="text-muted">Sign up to access Controsepticon's search capabilities.</p>
+            
+            {% if error %}
+            <div class="alert alert-danger text-center">{{ error }}</div>
+            {% endif %}
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <input type="text" name="username" id="username" class="form-control" placeholder="Choose a username" required>
+                        <span class="material-symbols-outlined">person</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Create a password" required>
+                        <span class="input-group-text">
+                            <span class="material-symbols-outlined">lock</span>
+                        </span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Register</button>
+            </form>
+            
+            <p class="text-center mt-3">
+                Already have an account? <a href="{{ url_for('login') }}" class="text-decoration-none text-primary">Log in</a>
+            </p>
+        </div>
+        
+        <!-- Right Section -->
+        <div class="col-md-6 d-none d-md-flex flex-column justify-content-center align-items-center text-white p-5" style="background: linear-gradient(135deg, #0021ff, #0115b7);">
+            <h2 class="fw-bold text-white">Join the Future.</h2>
+            <p class="text-center text-white-50">"Expand your knowledge. Register now and start exploring."</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

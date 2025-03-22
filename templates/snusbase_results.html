@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4 class="text-center">Snusbase Search Results</h4>
+
+    {% if results %}
+        <h5 class="text-success">Results Found: <strong>{{ results|length }}</strong></h5>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        {% for col in column_headers %}
+                            <th>{{ col|capitalize }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                        <tr>
+                            <td>{{ result.get('source', 'N/A') }}</td>
+                            {% for col in column_headers %}
+                                <td>{{ result.get(col, 'N/A') }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-danger">No results found.</p>
+    {% endif %}
+
+    <!-- Back to Dashboard Button -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('search.dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+</div>
+
+{% endblock %}

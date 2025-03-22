@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<nav id="sidebar" class="sidebar p-4" style="width: 180px; height: calc(100vh - 120px); position: fixed; left: 0; top: 120px; background: #f8f9fa; color: #333; border-right: 1px solid #e9ecef; box-shadow: 3px 0px 15px rgba(0, 0, 0, 0.08); z-index: 999;">
+    <h5 style="color: #000000; font-weight: bold; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #dee2e6;">Navigation</h5>
+    <ul class="nav flex-column" style="gap: 0.5rem;">
+        <li class="nav-item">
+            <button class="nav-link d-flex align-items-center py-2 px-3 rounded-3 w-100 text-start border-0 bg-transparent" onclick="toggleDiv('osint-search', 'email')" style="color: #000000 !important; font-weight: 500; transition: all 0.2s ease; cursor: pointer;">
+                <span class="material-symbols-outlined me-3" style="font-size: 20px; color: #000000;">search</span>
+                <span style="color: #000000;">Search</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link d-flex align-items-center py-2 px-3 rounded-3 w-100 text-start border-0 bg-transparent" onclick="toggleDiv('email', 'osint-search')"  style="color: #000000 !important; font-weight: 500; transition: all 0.2s ease; cursor: pointer;">
+                <span class="material-symbols-outlined me-3" style="font-size: 20px; color: #000000;">email</span>
+                <span style="color: #000000;">Email</span>
+            </button>
+        </li>
+    </ul>
+</nav>
+
+
+    
+<div class="container mt-4" id="osint-search">
+    <div class="query-stats-container d-flex justify-content-end mt-3 me-3 position-absolute" style="top: 200px; right: 20px; z-index: 10;">
+        <div class="query-stats text-end px-4 py-3 rounded-4" style="background: rgba(255, 255, 255, 0.9); color: #222; border: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15); min-width: 220px;">
+            <h6 class="mb-1 fw-bold" style="font-size: 1.25rem;"> Daily Queries</h6>
+            <h6 class="mb-1 fw-bold" style="font-size: 1.25rem;"> Intelx:</h6>
+            <p class="mb-0 fw-semibold text-primary" id="queriesIntelx" style="font-size: 1.5rem;">{{ queries_intelx }}</p>
+            <h6 class="mt-2 mb-1 fw-bold" style="font-size: 1.25rem;"> Snusbase</h6>
+            <p class="mb-0 fw-semibold text-primary" id="queriesSnusbase" style="font-size: 1.5rem;">{{ queries_snusbase }}</p>
+        </div>
+        
+    </div>
+    <div class="card shadow-lg border-0 p-4 rounded-4">
+        <h2 class="text-center text-primary fw-bold">Search</h2>
+        <form method="POST" id="searchForm" class="mt-3" onsubmit="return validateAndSubmitSearch()" action="/dashboard">
+            <div class="btn-group d-flex justify-content-center w-100 mb-4" style="display: flex; justify-content: center; margin-top: 10px !important;" role="group" aria-label="Search Type">
+                <button type="button" class="btn btn-outline-primary active" id="intelxBtn" onclick="setSearchType('intelx');">Intelx</button>
+                <button type="button" class="btn btn-outline-primary" id="snusbaseBtn" onclick="setSearchType('snusbase');">Snusbase</button>
+                <input type="hidden" name="api_source" id="apiSelect" value="{{ api_source }}">
+            </div>
+            <div class="input-group input-group-lg flex-grow-1">
+                <input type="text" name="query" class="form-control border-0 shadow-sm" placeholder="Enter query..." required>
+                <button class="btn btn-primary px-4" type="submit">Search</button>
+            </div>
+            <div id="snusbaseFields" class="d-none text-center mt-3">
+                <input type="hidden" name="snusbase_type" id="snusbaseType" value="{{ snusbase_type if snusbase_type else 'email' }}">
+                <h6 class="fw-bold">Select Snusbase Type</h6>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary" id="snusbaseBtn-email" onclick="setSnusbaseType('email');">Email</button>
+                    <button type="button" class="btn btn-outline-secondary" id="snusbaseBtn-username" onclick="setSnusbaseType('username');">Username</button>
+                    <button type="button" class="btn btn-outline-secondary" id="snusbaseBtn-password" onclick="setSnusbaseType('password');">Password</button>
+                    <button type="button" class="btn btn-outline-secondary" id="snusbaseBtn-name" onclick="setSnusbaseType('name');">Name</button>
+                    <button type="button" class="btn btn-outline-secondary" id="snusbaseBtn-hash" onclick="setSnusbaseType('hash');">Hash</button>
+                    <button type="button" class="btn btn-outline-secondary" id="snusbaseBtn-lastip" onclick="setSnusbaseType('lastip');">IP Address</button>
+                </div>
+                <!-- Removed duplicate input field here -->
+            </div>
+        </form>
+        
+        {% if error %}
+        <div class="alert alert-danger text-center mt-3">{{ error }}</div>
+        {% endif %}
+        
+        {% if no_results %}
+        <div class="alert alert-warning mt-3 text-center p-2">
+            <strong>No results found</strong> for "<em>{{ query }}</em>". Try a different search term.
+        </div>
+        {% endif %}
+        
+        {% if results %}
+        <div class="mt-4">
+            <h5 class="text-success">Results Found: <strong>{{ results|length }}</strong></h5>
+            <ul class="list-group mt-2 shadow-sm">
+                {% for result in results %}
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <a href="{{ result.url }}" class="text-decoration-none fw-semibold text-dark">{{ result.title }}</a>
+                    <span class="badge bg-primary">View</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    <div class="text-center mt-4">
+        <h5 class="fw-bold"> Next Query Refresh In: <span id="countdown">Loading...</span></h5>
+    </div>
+</div>
+
+<div class="card shadow-lg border-0 p-4 rounded-4" id="email">
+    <div class="query-stats-container position-absolute" style="top: 1rem; right: -280px; z-index: 10;">
+        <div class="query-stats text-end px-4 py-3 rounded-4"
+             style="background: rgba(255, 255, 255, 0.9); color: #222; border: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15); min-width: 220px;">
+            <h6 class="mb-1 fw-bold" style="font-size: 1.25rem;">Daily Emails</h6>
+            <p class="mb-0 fw-semibold text-primary" id="queriesIntelx" style="font-size: 1.5rem;">{{ daily_emails }}</p>
+        </div>
+    </div>
+    <h2 class="text-center text-primary fw-bold">Email Form</h2>
+    <form method="POST" id="emailForm" class="mt-3" action="/dashboard/payload">
+        <div class="mb-3">
+            <label for="emailInput" class="form-label fw-bold">Email</label>
+            <input type="email" id="emailInput" name="email" class="form-control border-0 shadow-sm"
+                placeholder="Enter your email..." required value="{{ response[0] if response and response[0] else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="numberInput" class="form-label fw-bold">Number of Mails</label>
+            <input type="number" id="numberInput" name="mail_count" class="form-control border-0 shadow-sm"
+                placeholder="Enter a number..." required min="25" value="{{ response[1] if response and response[1] else '' }}">
+        </div>
+        <div class="d-flex justify-content-center">
+            <button class="btn btn-primary px-4" type="submit">Submit</button>
+        </div>
+    </form>
+    <div id="responseMessage" class="alert alert-success mt-3 text-center rounded-3 shadow-sm d-none"></div>
+</div>
+
+
+
+
+<script>
+    document.getElementById("emailForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent traditional form submission
+
+        let email = document.getElementById("emailInput").value;
+
+        // Render response dynamically
+        let responseDiv = document.getElementById("responseMessage");
+        responseDiv.innerHTML = `<strong>Payload sent to:</strong> ${email}`;
+        responseDiv.classList.remove("d-none");
+
+        // Optionally, reset form after submission
+        this.reset();
+    });
+document.addEventListener("DOMContentLoaded", function() {
+    let activeDiv = localStorage.getItem("activeDiv") || "{{ active_section }}";  // Get from Python or localStorage
+    console.log("Active section on load:", activeDiv);  // Debugging
+
+    // Hide all sections first
+    document.getElementById("osint-search").style.display = "none";
+    document.getElementById("email").style.display = "none";
+
+    // Ensure only the active section is shown
+    if (document.getElementById(activeDiv)) {
+        document.getElementById(activeDiv).style.display = "block";
+    } else {
+        document.getElementById("osint-search").style.display = "block"; // Default fallback
+    }
+});
+
+// Store the active section when a button is clicked
+function toggleDiv(targetId, hideId) {
+    document.getElementById(targetId).style.display = "block";
+    document.getElementById(hideId).style.display = "none";
+    localStorage.setItem("activeDiv", targetId);  // Save active section
+}   
+
+function validateAndSubmitSearch() {
+    let queryInput = document.querySelector("input[name='query']");
+    let apiSource = document.getElementById("apiSelect").value;
+    let snusbaseType = document.getElementById("snusbaseType").value;
+    let form = document.getElementById("searchForm");
+
+    if (!queryInput.value.trim()) {
+        alert("Please enter a search query.");
+        return false;
+    }
+
+    if (apiSource === "snusbase") {
+        form.action = "/snusbase_results";
+        if (!snusbaseType) {
+            alert("Please select a Snusbase search type.");
+            return false;
+        }
+    } else {
+        form.action = "/dashboard";
+    }
+    return true;
+}
+
+function validateAndSubmitEmail(){
+    
+}
+function setSnusbaseType(type) {
+    document.getElementById('snusbaseType').value = type;
+    localStorage.setItem('selectedSnusbaseType', type);
+    
+    // Remove active class from all buttons
+    document.querySelectorAll("#snusbaseFields .btn").forEach(btn => {
+        btn.classList.remove("active");
+        btn.style.backgroundColor = "";
+    });
+    
+    // Add active class and change background color for the selected button
+    let selectedBtn = document.getElementById("snusbaseBtn-" + type);
+    selectedBtn.classList.add("active");
+    selectedBtn.style.backgroundColor = "#a0a0a0";
+}
+
+function setSearchType(type) {
+    document.getElementById("snusbaseFields").classList.add("d-none");
+    if (type === 'snusbase') {
+        document.getElementById("snusbaseFields").classList.remove("d-none");
+    }
+    document.getElementById("apiSelect").value = type;
+    localStorage.setItem("selectedSearchType", type);
+    document.getElementById("intelxBtn").classList.remove("active");
+    document.getElementById("snusbaseBtn").classList.remove("active");
+    document.getElementById(type + "Btn").classList.add("active");
+}
+
+// Function to clear results
+function clearResults() {
+    // Clear results inside the card
+    const card = document.querySelector('.card.shadow-lg');
+    if (card) {
+        // Find and clear the results section
+        const resultsDiv = card.querySelector('.mt-4:has(h5.text-success)');
+        if (resultsDiv) {
+            resultsDiv.innerHTML = '';
+        }
+        
+        // Hide any alert messages
+        const alertDivs = card.querySelectorAll('.alert');
+        alertDivs.forEach(div => {
+            div.style.display = 'none';
+        });
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    updateCountdown();
+    
+    // Restore stored preferences
+    let storedType = localStorage.getItem("selectedSearchType");
+    if (storedType) {
+        setSearchType(storedType);
+    }
+    
+    let storedSnusbaseType = localStorage.getItem("selectedSnusbaseType");
+    if (storedSnusbaseType) {
+        setSnusbaseType(storedSnusbaseType);
+    }
+    
+    // Add event listeners to the buttons to clear results
+    document.getElementById("intelxBtn").addEventListener("click", clearResults);
+    document.getElementById("snusbaseBtn").addEventListener("click", clearResults);
+});
+
+function updateCountdown() {
+    let refreshTimestamp = {{ refresh_timestamp }};
+    let countdownElement = document.getElementById("countdown");
+    
+    function calculateTimeLeft() {
+        let now = Math.floor(Date.now() / 1000);
+        let timeLeft = refreshTimestamp - now;
+
+        if (timeLeft <= 0) {
+            countdownElement.innerText = "Refreshing soon...";
+            return;
+        }
+
+        let hours = Math.floor(timeLeft / 3600);
+        let minutes = Math.floor((timeLeft % 3600) / 60);
+        let seconds = timeLeft % 60;
+
+        countdownElement.innerText = `${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    calculateTimeLeft();
+    setInterval(calculateTimeLeft, 1000);
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    updateCountdown();
+    
+    // Restore stored preferences
+    let storedType = localStorage.getItem("selectedSearchType");
+    if (storedType) {
+        setSearchType(storedType);
+    }
+    
+    let storedSnusbaseType = localStorage.getItem("selectedSnusbaseType");
+    if (storedSnusbaseType) {
+        setSnusbaseType(storedSnusbaseType);
+    }
+});
+</script>
+{% endblock %}

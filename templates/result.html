@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}View File{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 p-4 rounded-4">
+        <h2 class="text-center text-primary fw-bold">📄 Search Result</h2>
+        
+        {% if match %}
+        <div class="alert alert-warning text-center p-2 mt-2">
+            <strong>Highlighted Match:</strong>
+            <pre class="file-content bg-light p-3 rounded-3 border" id="first-match">{{ match | safe }}</pre>
+        </div>
+        {% endif %}
+
+        <!-- Search in file -->
+        <div class="input-group my-3">
+            <input type="text" id="searchInFile" class="form-control form-control-lg border-0 shadow-sm" placeholder="Search in file...">
+            <button class="btn btn-primary px-4" onclick="filterFileContent()">Search</button>
+            <button class="btn btn-secondary px-4" id="nextMatchBtn" onclick="goToNextMatch()" disabled>Next</button>
+        </div>
+
+        <!-- File Preview -->
+        <div class="file-container p-3 border rounded-3 bg-light overflow-auto shadow-sm" style="max-height: 400px; font-size: 16px; line-height: 1.5;">
+            <pre id="fileContent" class="file-content">{{ content | safe }}</pre>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="/download/{{ systemid }}/{{ file_path }}" class="btn btn-success px-4">⬇️ Download</a>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Search in File -->
+<script>
+let matchIndex = -1;
+let matches = [];
+
+function filterFileContent() {
+    let searchQuery = document.getElementById("searchInFile").value.toLowerCase();
+    let fileContentElement = document.getElementById("fileContent");
+    let fileContent = fileContentElement.innerHTML;
+    
+    if (searchQuery === "") {
+        fileContentElement.innerHTML = fileContent;
+        document.getElementById("nextMatchBtn").disabled = true;
+        return;
+    }
+    
+    let regex = new RegExp(searchQuery, "gi");
+    let highlightedText = fileContent.replace(regex, match => `<span class='highlight bg-warning p-1 rounded'>${match}</span>`);
+    
+    fileContentElement.innerHTML = highlightedText;
+    
+    // Get all matches and store them
+    matches = document.querySelectorAll(".highlight");
+    matchIndex = -1;
+    
+    if (matches.length > 0) {
+        document.getElementById("nextMatchBtn").disabled = false;
+        goToNextMatch();
+    }
+}
+
+function goToNextMatch() {
+    if (matches.length === 0) return;
+    matchIndex = (matchIndex + 1) % matches.length;
+    matches[matchIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+}
+</script>
+{% endblock %}

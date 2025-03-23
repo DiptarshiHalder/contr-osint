@@ -29,13 +29,23 @@ def fetch_result(systemid, filename):
         if not all([sid, bucket, ctype, mediatype]):
             print("Error: Missing required fields.")
             return None
-        file_view = intelx_client.GET_CAPABILITIES().get('paths').get('/file/view').get('Credit')
-        file_preview = intelx_client.GET_CAPABILITIES().get('paths').get('/file/preview').get('Credit')
-        # Fetch file content
-        if file_preview > 0:
-            file_content = intelx_client.FILE_PREVIEW(format=0, ctype=ctype, mediatype=mediatype, sid=sid, bucket=bucket,lines=1000000000)
-        elif file_view > 0:
+            
+        capabilities = intelx_client.GET_CAPABILITIES()
+        paths = capabilities.get("paths", {})
+
+        file_view_credit = paths.get("/file/view", {}).get("Credit", 0)
+        file_preview_credit = paths.get("/file/preview", {}).get("Credit", 0)
+
+        # Fetch file content based on credits
+        file_content = None
+        if file_view_credit and file_view_credit > 0:
+            print("invoking view")
             file_content = intelx_client.FILE_VIEW(ctype=ctype, mediatype=mediatype, sid=sid, bucket=bucket)
+        elif file_preview_credit and file_preview_credit > 0:
+            print("invoking preview")
+            file_content = intelx_client.FILE_PREVIEW(format=0, ctype=ctype, mediatype=mediatype, sid=sid, bucket=bucket, lines=1000000)
+        else:
+            print("No available credits for file view or preview.")
 
         if not file_content:
             print("Error: No file content received.")
